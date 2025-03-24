@@ -1,103 +1,165 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Loader2, RefreshCw, List, Grid, Download } from 'lucide-react';
+import BookList from '@/components/BookList';
+import { SUPPORTED_LOCALES } from '@/utils/bookGenerator';
+import { exportToCSV } from '@/utils/csvExport';
+import BookGallery from '@/components/BookGallery';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [seed, setSeed] = useState('42');
+  const [language, setLanguage] = useState('en-US');
+  const [likes, setLikes] = useState(5);
+  const [reviews, setReviews] = useState(2.5);
+  const [viewMode, setViewMode] = useState<'list' | 'gallery'>('list');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ['books', seed, language, likes, reviews],
+      queryFn: async ({ pageParam = 1 }) => {
+        const params = new URLSearchParams({
+          seed,
+          language,
+          likes: likes.toString(),
+          reviews: reviews.toString(),
+          page: pageParam.toString(),
+          pageSize: '20',
+        });
+        const res = await fetch(`/api/books?${params}`);
+        return res.json();
+      },
+      getNextPageParam: (lastPage, pages) => {
+        return lastPage.length === 20 ? pages.length + 1 : undefined;
+      },
+    });
+
+  const generateRandomSeed = () => {
+    setSeed(Math.floor(Math.random() * 100000000).toString());
+  };
+
+  const handleExportCSV = () => {
+    const allBooks = data?.pages.flat() || [];
+    exportToCSV(allBooks);
+  };
+
+  return (
+    <main className="container mx-auto p-4 space-y-6">
+      <Card className="p-6 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Language & Region</label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SUPPORTED_LOCALES).map(([code, name]) => (
+                  <SelectItem key={code} value={code}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Seed</label>
+            <div className="flex gap-2">
+              <Input
+                value={seed}
+                onChange={(e) => setSeed(e.target.value)}
+                placeholder="Enter seed..."
+              />
+              <Button size="icon" onClick={generateRandomSeed}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Likes per book: {likes.toFixed(1)}
+            </label>
+            <Slider
+              value={[likes]}
+              onValueChange={(value) => setLikes(value[0])}
+              min={0}
+              max={10}
+              step={0.1}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Reviews per book: {reviews.toFixed(1)}
+            </label>
+            <Slider
+              value={[reviews]}
+              onValueChange={(value) => setReviews(value[0])}
+              min={0}
+              max={10}
+              step={0.1}
+            />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <div className="flex justify-between items-center pt-4">
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4 mr-2" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'gallery' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('gallery')}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              Gallery
+            </Button>
+          </div>
+
+          <Button onClick={handleExportCSV} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
+      </Card>
+
+      {isLoading ? (
+        <div className="flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : viewMode === 'list' ? (
+        <BookList
+          pages={data?.pages || []}
+          onLoadMore={() => !isFetchingNextPage && hasNextPage && fetchNextPage()}
+          isFetchingNextPage={isFetchingNextPage}
+        />
+      ) : (
+        <BookGallery
+          pages={data?.pages || []}
+          onLoadMore={() => !isFetchingNextPage && hasNextPage && fetchNextPage()}
+          isFetchingNextPage={isFetchingNextPage}
+        />
+      )}
+    </main>
   );
 }
