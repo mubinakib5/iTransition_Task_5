@@ -50,6 +50,7 @@ export default function BookGallery({
                 width={400}
                 height={600}
                 className="w-full h-auto object-cover"
+                unoptimized
               />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-4 text-white flex flex-col justify-end">
                 <h3 className="font-semibold">{book.title}</h3>

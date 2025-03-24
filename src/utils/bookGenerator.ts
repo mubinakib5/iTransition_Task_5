@@ -1,4 +1,4 @@
-import { Faker, de, en, fr } from '@faker-js/faker';
+import { Faker, de, en, fr, base } from '@faker-js/faker';
 import seedrandom from 'seedrandom';
 import { Book, GeneratorParams, Review } from '@/types/book';
 
@@ -14,17 +14,17 @@ export function generateBooks(params: GeneratorParams): Book[] {
   const combinedSeed = `${seed}-${page}`;
   const rng = seedrandom(combinedSeed);
 
-  // Create a localized faker instance
+  // Create a localized faker instance with a fallback to 'en' and 'base'
   let fakerInstance: Faker;
   switch (language) {
     case 'de-DE':
-      fakerInstance = new Faker({ locale: [de] });
+      fakerInstance = new Faker({ locale: [de, en, base] });
       break;
     case 'fr-FR':
-      fakerInstance = new Faker({ locale: [fr] });
+      fakerInstance = new Faker({ locale: [fr, en, base] });
       break;
     default:
-      fakerInstance = new Faker({ locale: [en] });
+      fakerInstance = new Faker({ locale: [en, base] });
   }
 
   return Array.from({ length: pageSize }, (_, index) => {
@@ -33,7 +33,7 @@ export function generateBooks(params: GeneratorParams): Book[] {
     return {
       id: actualIndex,
       isbn: generateISBN(rng),
-      title: fakerInstance.commerce.productName(),
+      title: fakerInstance.commerce.productName(), // Now guaranteed to work
       authors: generateAuthors(rng, fakerInstance),
       publisher: fakerInstance.company.name(),
       publishYear: fakerInstance.date.past().getFullYear(),
