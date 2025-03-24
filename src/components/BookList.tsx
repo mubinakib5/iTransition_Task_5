@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
-import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import BookCard from './BookCard';
 
@@ -15,7 +14,7 @@ export default function BookList({
   onLoadMore,
   isFetchingNextPage,
 }: BookListProps) {
-  const observerRef = useRef<IntersectionObserver>();
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,7 +38,7 @@ export default function BookList({
 
   return (
     <div className="space-y-4">
-      {pages.map((page, pageIndex) =>
+      {pages.map((page) =>
         page.map((book) => <BookCard key={book.id} book={book} />)
       )}
 

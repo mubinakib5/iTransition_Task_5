@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { Card } from '@/components/ui/card';
 import { Loader2, ThumbsUp, Star } from 'lucide-react';
+import Image from 'next/image';
 
 interface BookGalleryProps {
   pages: Book[][];
@@ -15,7 +16,7 @@ export default function BookGallery({
   onLoadMore,
   isFetchingNextPage,
 }: BookGalleryProps) {
-  const observerRef = useRef<IntersectionObserver>();
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,10 +44,12 @@ export default function BookGallery({
         page.map((book) => (
           <Card key={book.id} className="overflow-hidden group">
             <div className="relative aspect-[2/3]">
-              <img
+              <Image
                 src={book.coverUrl}
                 alt={book.title}
-                className="w-full h-full object-cover"
+                width={400}
+                height={600}
+                className="w-full h-auto object-cover"
               />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-4 text-white flex flex-col justify-end">
                 <h3 className="font-semibold">{book.title}</h3>

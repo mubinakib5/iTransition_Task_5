@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Book } from '@/types/book';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, ThumbsUp, Star } from 'lucide-react';
+import Image from 'next/image';
 
 interface BookCardProps {
   book: Book;
@@ -9,6 +10,7 @@ interface BookCardProps {
 
 export default function BookCard({ book }: BookCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { title, coverUrl } = book;  // Only destructure what we use
 
   return (
     <Card
@@ -40,10 +42,12 @@ export default function BookCard({ book }: BookCardProps) {
 
       {isExpanded && (
         <div className="mt-4 space-y-4">
-          <img
-            src={book.coverUrl}
-            alt={book.title}
-            className="w-48 h-72 object-cover rounded-md"
+          <Image
+            src={coverUrl}
+            alt={title}
+            width={400}
+            height={600}
+            className="w-full h-auto"
           />
 
           {book.reviews.length > 0 && (

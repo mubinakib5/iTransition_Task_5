@@ -41,6 +41,7 @@ export default function Home() {
         const res = await fetch(`/api/books?${params}`);
         return res.json();
       },
+      initialPageParam: 1,  // Add this line
       getNextPageParam: (lastPage, pages) => {
         return lastPage.length === 20 ? pages.length + 1 : undefined;
       },
