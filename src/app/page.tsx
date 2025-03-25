@@ -18,13 +18,14 @@ import BookList from '@/components/BookList';
 import { SUPPORTED_LOCALES } from '@/utils/bookGenerator';
 import { exportToCSV } from '@/utils/csvExport';
 import BookGallery from '@/components/BookGallery';
+import BookTable from '@/components/BookTable';
 
 export default function Home() {
   const [seed, setSeed] = useState('42');
   const [language, setLanguage] = useState('en-US');
   const [likes, setLikes] = useState(5);
   const [reviews, setReviews] = useState(2.5);
-  const [viewMode, setViewMode] = useState<'list' | 'gallery'>('list');
+  const [viewMode, setViewMode] = useState<'table' | 'list' | 'gallery'>('table');
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useInfiniteQuery({
@@ -120,6 +121,14 @@ export default function Home() {
         <div className="flex justify-between items-center pt-4">
           <div className="flex gap-2">
             <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              <List className="h-4 w-4 mr-2" />
+              Table
+            </Button>
+            <Button
               variant={viewMode === 'list' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('list')}
@@ -148,6 +157,12 @@ export default function Home() {
         <div className="flex justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
+      ) : viewMode === 'table' ? (
+        <BookTable
+          pages={data?.pages || []}
+          onLoadMore={() => !isFetchingNextPage && hasNextPage && fetchNextPage()}
+          isFetchingNextPage={isFetchingNextPage}
+        />
       ) : viewMode === 'list' ? (
         <BookList
           pages={data?.pages || []}
