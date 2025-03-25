@@ -1,10 +1,16 @@
-'use client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import Providers from '@/components/Providers';
 
 const inter = Inter({ subsets: ['latin'] });
-const queryClient = new QueryClient();
+
+export const metadata = {
+  title: 'Book Generator',
+  description: 'A book collection generator with multiple view modes',
+  icons: {
+    icon: '/favicon.ico',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -14,9 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

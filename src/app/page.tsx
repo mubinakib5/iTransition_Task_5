@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, RefreshCw, List, Grid, Download } from 'lucide-react';
-import BookList from '@/components/BookList';
+// Remove this import
+// import BookList from '@/components/BookList';
 import { SUPPORTED_LOCALES } from '@/utils/bookGenerator';
 import { exportToCSV } from '@/utils/csvExport';
 import BookGallery from '@/components/BookGallery';
@@ -25,7 +26,8 @@ export default function Home() {
   const [language, setLanguage] = useState('en-US');
   const [likes, setLikes] = useState(5);
   const [reviews, setReviews] = useState(2.5);
-  const [viewMode, setViewMode] = useState<'table' | 'list' | 'gallery'>('table');
+  // Change the view mode type and default
+  const [viewMode, setViewMode] = useState<'table' | 'gallery'>('table');
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useInfiniteQuery({
@@ -129,14 +131,6 @@ export default function Home() {
               Table
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4 mr-2" />
-              List
-            </Button>
-            <Button
               variant={viewMode === 'gallery' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('gallery')}
@@ -159,12 +153,6 @@ export default function Home() {
         </div>
       ) : viewMode === 'table' ? (
         <BookTable
-          pages={data?.pages || []}
-          onLoadMore={() => !isFetchingNextPage && hasNextPage && fetchNextPage()}
-          isFetchingNextPage={isFetchingNextPage}
-        />
-      ) : viewMode === 'list' ? (
-        <BookList
           pages={data?.pages || []}
           onLoadMore={() => !isFetchingNextPage && hasNextPage && fetchNextPage()}
           isFetchingNextPage={isFetchingNextPage}
