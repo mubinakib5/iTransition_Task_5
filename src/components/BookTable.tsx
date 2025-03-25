@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
-import { ChevronDown, ChevronUp, ThumbsUp, Star } from 'lucide-react';
+import { ChevronDown, ChevronUp, ThumbsUp, Star, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface BookTableProps {
@@ -17,6 +17,7 @@ export default function BookTable({
   isFetchingNextPage,
 }: BookTableProps) {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const toggleRow = (bookId: number) => {
     setExpandedRows(prev =>
@@ -25,6 +26,23 @@ export default function BookTable({
         : [...prev, bookId]
     );
   };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [onLoadMore]);
 
   return (
     <div className="overflow-x-auto">
@@ -120,6 +138,10 @@ export default function BookTable({
           )}
         </tbody>
       </table>
+
+      <div ref={loadMoreRef} className="h-10 flex justify-center items-center mt-4">
+        {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin" />}
+      </div>
     </div>
   );
 }
