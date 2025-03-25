@@ -103,12 +103,14 @@ export default function BookTable({
                             </p>
                           </div>
                           <div className="flex items-center gap-4">
-                            <div className="flex items-center">
-                              <ThumbsUp className="h-4 w-4 mr-1" />
-                              {book.likes}
-                            </div>
+                            {book.likes > 0 && (
+                              <div className="flex items-center">
+                                <ThumbsUp className="h-4 w-4 mr-1" />
+                                {book.likes}
+                              </div>
+                            )}
                           </div>
-                          {book.reviews.length > 0 && (
+                          {book.reviews && book.reviews.length > 0 && (
                             <div className="space-y-3">
                               <h3 className="font-semibold">Reviews</h3>
                               {book.reviews.map((review) => (

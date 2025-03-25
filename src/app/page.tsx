@@ -26,29 +26,7 @@ export default function Home() {
   const [language, setLanguage] = useState('en-US');
   const [likes, setLikes] = useState(5);
   const [reviews, setReviews] = useState(2.5);
-  // Change the view mode type and default
   const [viewMode, setViewMode] = useState<'table' | 'gallery'>('table');
-
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useInfiniteQuery({
-      queryKey: ['books', seed, language, likes, reviews],
-      queryFn: async ({ pageParam = 1 }) => {
-        const params = new URLSearchParams({
-          seed,
-          language,
-          likes: likes.toString(),
-          reviews: reviews.toString(),
-          page: pageParam.toString(),
-          pageSize: '20',
-        });
-        const res = await fetch(`/api/books?${params}`);
-        return res.json();
-      },
-      initialPageParam: 1,  // Add this line
-      getNextPageParam: (lastPage, pages) => {
-        return lastPage.length === 20 ? pages.length + 1 : undefined;
-      },
-    });
 
   const generateRandomSeed = () => {
     setSeed(Math.floor(Math.random() * 100000000).toString());
@@ -58,6 +36,38 @@ export default function Home() {
     const allBooks = data?.pages.flat() || [];
     exportToCSV(allBooks);
   };
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ['books', seed, language, likes, reviews],
+      queryFn: async ({ pageParam = 1 }) => {
+        const combinedSeed = `${seed}-${pageParam}`;
+        const params = new URLSearchParams({
+          seed: combinedSeed,
+          language,
+          likes: likes.toString(),
+          reviews: reviews.toString(),
+          page: pageParam.toString(),
+          pageSize: '20',
+        });
+        console.log('Fetching books with params:', Object.fromEntries(params));
+        const res = await fetch(`/api/books?${params}`);
+        if (!res.ok) {
+          console.error('API Error:', await res.text());
+          throw new Error('Network response was not ok');
+        }
+        const data = await res.json();
+        console.log('API Response:', data);
+        return data;
+      },
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, pages) => {
+        return lastPage.length === 20 ? pages.length + 1 : undefined;
+      },
+    });
+
+  // Add console.log to debug
+  console.log('Query Data:', data);
 
   return (
     <main className="container mx-auto p-4 space-y-6">

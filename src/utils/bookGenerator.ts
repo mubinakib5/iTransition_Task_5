@@ -1,6 +1,6 @@
 import { Faker, de, en, fr, base } from '@faker-js/faker';
 import seedrandom from 'seedrandom';
-import { Book, GeneratorParams, Review } from '@/types/book';
+import { Book, Review } from '@/types/book';
 
 const SUPPORTED_LOCALES = {
   'en-US': 'English (US)',
@@ -8,38 +8,43 @@ const SUPPORTED_LOCALES = {
   'fr-FR': 'French (France)'
 };
 
-export function generateBooks(params: GeneratorParams): Book[] {
-  const { seed, language, page, pageSize, likesPerBook, reviewsPerBook } = params;
-  
-  const combinedSeed = `${seed}-${page}`;
-  const rng = seedrandom(combinedSeed);
+export function generateBooks(
+  rng: () => number,
+  language: string,
+  page: number,
+  pageSize: number,
+  likesPerBook: number,
+  reviewsPerBook: number,
+  seed: string
+): Book[] {
+  const baseSeed = seed.split('-')[0];
 
-  // Create a localized faker instance with a fallback to 'en' and 'base'
   let fakerInstance: Faker;
   switch (language) {
     case 'de-DE':
-      fakerInstance = new Faker({ locale: [de, en, base] });
+      fakerInstance = new Faker({ locale: [de, en, base], seed: parseInt(baseSeed) });
       break;
     case 'fr-FR':
-      fakerInstance = new Faker({ locale: [fr, en, base] });
+      fakerInstance = new Faker({ locale: [fr, en, base], seed: parseInt(baseSeed) });
       break;
     default:
-      fakerInstance = new Faker({ locale: [en, base] });
+      fakerInstance = new Faker({ locale: [en, base], seed: parseInt(baseSeed) });
   }
 
   return Array.from({ length: pageSize }, (_, index) => {
     const actualIndex = (page - 1) * pageSize + index + 1;
-    
+    const bookRng = seedrandom(`${baseSeed}-${actualIndex}`);
+
     return {
       id: actualIndex,
-      isbn: generateISBN(rng),
-      title: fakerInstance.commerce.productName(), // Now guaranteed to work
-      authors: generateAuthors(rng, fakerInstance),
+      isbn: generateISBN(bookRng),
+      title: fakerInstance.commerce.productName(),
+      authors: generateAuthors(bookRng, fakerInstance),
       publisher: fakerInstance.company.name(),
-      publishYear: fakerInstance.date.past().getFullYear(),
-      coverUrl: generateCoverUrl(rng),
-      likes: generateLikes(likesPerBook, rng),
-      reviews: generateReviews(reviewsPerBook, rng, fakerInstance)
+      publishYear: 2000 + Math.floor(bookRng() * 24),
+      coverUrl: generateCoverUrl(bookRng),
+      likes: generateLikes(likesPerBook, bookRng),
+      reviews: generateReviews(reviewsPerBook, bookRng, fakerInstance)
     };
   });
 }
@@ -59,14 +64,21 @@ function generateAuthors(rng: () => number, localFaker: Faker): string[] {
 }
 
 function generateReviews(reviewsPerBook: number, rng: () => number, localFaker: Faker): Review[] {
-  let count = Math.floor(reviewsPerBook);
-  const fraction = reviewsPerBook - count;
-  
-  if (fraction > 0 && rng() > fraction) {
-    count -= 1;
+  // Explicit check for zero
+  if (reviewsPerBook <= 0) {
+    return [];
   }
 
-  return Array.from({ length: count }, () => ({
+  const wholeCount = Math.floor(reviewsPerBook);
+  const fraction = reviewsPerBook - wholeCount;
+  const finalCount = wholeCount + (fraction > 0 && rng() < fraction ? 1 : 0);
+
+  // Double-check to ensure we don't generate reviews when we shouldn't
+  if (finalCount <= 0) {
+    return [];
+  }
+
+  return Array.from({ length: finalCount }, () => ({
     id: localFaker.string.uuid(),
     author: localFaker.person.fullName(),
     text: localFaker.lorem.paragraph(),
@@ -76,10 +88,17 @@ function generateReviews(reviewsPerBook: number, rng: () => number, localFaker: 
 }
 
 function generateLikes(likesPerBook: number, rng: () => number): number {
-  const count = Math.floor(likesPerBook);
-  const fraction = likesPerBook - count;
-  
-  return count + (rng() < fraction ? 1 : 0);
+  // Explicit check for zero
+  if (likesPerBook <= 0) {
+    return 0;
+  }
+
+  const wholeCount = Math.floor(likesPerBook);
+  const fraction = likesPerBook - wholeCount;
+  const result = wholeCount + (fraction > 0 && rng() < fraction ? 1 : 0);
+
+  // Double-check to ensure we don't return likes when we shouldn't
+  return result <= 0 ? 0 : result;
 }
 
 function generateCoverUrl(rng: () => number): string {
